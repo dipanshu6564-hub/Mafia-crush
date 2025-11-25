@@ -2,7 +2,8 @@ const CACHE_NAME = 'mafia-crush-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  'https://cdn-icons-png.flaticon.com/512/2042/2042693.png'
 ];
 
 self.addEventListener('install', event => {
