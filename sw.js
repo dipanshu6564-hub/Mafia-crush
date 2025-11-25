@@ -1,9 +1,8 @@
 const CACHE_NAME = 'mafia-crush-v1';
 const urlsToCache = [
-  './',
-  './index.html',
-  './index.tsx',
-  './manifest.json'
+  '/',
+  '/index.html',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', event => {
