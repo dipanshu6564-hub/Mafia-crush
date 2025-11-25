@@ -26,35 +26,6 @@
         contain: strict; /* Isolate layout */
         transform: translateZ(0); /* Hardware accelerate container */
       }
-
-      .tile-enter {
-        animation: dropIn 0.3s ease-out;
-      }
-
-      @keyframes dropIn {
-        from { transform: translateY(-50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
-
-      .tile-matched {
-        animation: popOut 0.3s ease-in forwards;
-      }
-
-      @keyframes popOut {
-        to { transform: scale(0); opacity: 0; }
-      }
-
-      /* Custom Scrollbar for level select */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #1e293b; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #b45309; 
-        border-radius: 4px;
-      }
     </style>
   <script type="importmap">
 {

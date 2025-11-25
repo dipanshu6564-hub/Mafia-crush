@@ -2,15 +2,15 @@ import React from 'react';
 import { TileType, PowerUpType, TileSpecial } from './types';
 
 export const BOARD_SIZE = 8;
-export const ANIMATION_DELAY = 220; // Slightly higher than CSS transition (200ms)
+export const ANIMATION_DELAY = 150; // Super fast
 export const TIMER_DURATION = 300; 
 
 export const TILE_COLORS: Record<TileType, string> = {
-  [TileType.PISTOL]: 'text-red-600',
-  [TileType.HAT]: 'text-gray-900',
-  [TileType.CASH]: 'text-green-600',
-  [TileType.CIGAR]: 'text-amber-700',
-  [TileType.GEM]: 'text-blue-500',
+  [TileType.PISTOL]: 'text-red-500',
+  [TileType.HAT]: 'text-slate-300',
+  [TileType.CASH]: 'text-green-500',
+  [TileType.CIGAR]: 'text-amber-600',
+  [TileType.GEM]: 'text-blue-400',
   [TileType.KNUCKLES]: 'text-yellow-500',
   [TileType.EMPTY]: 'transparent',
 };
@@ -56,23 +56,17 @@ export const TILE_ICONS: Record<TileType, React.ReactNode> = {
   [TileType.EMPTY]: <div />,
 };
 
-// Overlays for Special Combo Blocks
+// Simplified Overlays for Performance - NO ANIMATIONS
 export const SPECIAL_OVERLAYS: Record<TileSpecial, React.ReactNode> = {
   [TileSpecial.NONE]: null,
   [TileSpecial.ROW_BLAST]: (
-    <div className="absolute inset-0 flex items-center justify-center animate-pulse z-20">
-      <div className="w-full h-1 bg-white shadow-[0_0_10px_#fff]" />
-      <div className="absolute bg-black/50 rounded-full p-1">
-        <svg viewBox="0 0 24 24" fill="white" className="w-4 h-4"><path d="M3 12h18v2H3z" /></svg>
-      </div>
+    <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+      <div className="w-full h-1 bg-white opacity-90 shadow-sm" />
     </div>
   ),
   [TileSpecial.COLOR_BOMB]: (
-    <div className="absolute inset-0 flex items-center justify-center z-20">
-      <div className="absolute inset-0 rounded-full border-4 border-yellow-400 animate-ping opacity-50"></div>
-      <div className="absolute bg-yellow-500 rounded-full p-1 shadow-[0_0_15px_#fbbf24]">
-        <svg viewBox="0 0 24 24" fill="white" className="w-5 h-5"><path d="M12 2l3 6 6 1-4.5 4.5L18 22l-6-3-6 3 1.5-8.5L3 9l6-1z" /></svg>
-      </div>
+    <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-600 border-2 border-white shadow-md"></div>
     </div>
   )
 };
@@ -80,26 +74,26 @@ export const SPECIAL_OVERLAYS: Record<TileSpecial, React.ReactNode> = {
 export const POWERUP_INFO: Record<PowerUpType, { name: string, icon: React.ReactNode, desc: string, color: string }> = {
   [PowerUpType.GUN]: {
     name: "Silencer",
-    desc: "Clears a horizontal row.",
+    desc: "Clears row",
     color: "bg-red-600",
     icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M3 12h18v2H3z" /></svg>
   },
   [PowerUpType.BOMB]: {
-    name: "Time Bomb",
-    desc: "Blasts a 3x3 area.",
-    color: "bg-gray-800",
+    name: "Bomb",
+    desc: "3x3 Blast",
+    color: "bg-gray-700",
     icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><circle cx="12" cy="12" r="8" /></svg>
   },
   [PowerUpType.FLAME]: {
     name: "Molotov",
-    desc: "Clears a cross (row & col).",
+    desc: "Cross Blast",
     color: "bg-orange-600",
     icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12 2L2 22h20L12 2z" /></svg>
   },
   [PowerUpType.DON]: {
     name: "Don's Order",
-    desc: "Clears all matching items.",
-    color: "bg-purple-800",
+    desc: "Clear Color",
+    color: "bg-purple-700",
     icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12 2l3 6 6 1-4.5 4.5L18 22l-6-3-6 3 1.5-8.5L3 9l6-1z" /></svg>
   }
 };

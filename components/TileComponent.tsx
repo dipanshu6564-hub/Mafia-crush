@@ -7,27 +7,24 @@ interface TileProps {
   isSelected: boolean;
   onClick: () => void;
   onPointerDown?: (e: React.PointerEvent) => void;
-  style?: React.CSSProperties;
 }
 
 const TileComponentBase: React.FC<TileProps> = ({ tile, isSelected, onClick, onPointerDown }) => {
+  if (tile.type === TileType.EMPTY) return null;
+
   const transformStyle: React.CSSProperties = {
-    // Translate3d with Z=0 forces GPU layer promotion
+    // Hardware acceleration
     transform: `translate3d(${tile.x * 100}%, ${tile.y * 100}%, 0)`,
     width: '12.5%', 
     height: '12.5%',
     position: 'absolute',
     top: 0,
     left: 0,
-    transition: 'transform 0.2s ease-out', 
+    transition: 'transform 0.15s ease-out', 
     zIndex: isSelected ? 50 : 10,
-    padding: '2px',
-    willChange: 'transform', // Inform browser of impending change
-    backfaceVisibility: 'hidden', // Reduce flickering on mobile
-    WebkitBackfaceVisibility: 'hidden'
+    padding: '3px',
+    // backfaceVisibility: 'hidden', // Sometimes causes blurry text on low-res screens, removing for crispness
   };
-
-  if (tile.type === TileType.EMPTY) return null;
 
   const colorClass = TILE_COLORS[tile.type] || 'text-white';
   const specialOverlay = tile.special ? SPECIAL_OVERLAYS[tile.special] : null;
@@ -40,11 +37,10 @@ const TileComponentBase: React.FC<TileProps> = ({ tile, isSelected, onClick, onP
       className="touch-none select-none"
     >
       <div className={`
-        relative w-full h-full rounded-lg flex items-center justify-center
-        shadow-inner
-        transition-all duration-200
-        ${isSelected ? 'bg-white/20 ring-2 ring-yellow-400' : 'bg-slate-700/50 hover:bg-slate-600/50'}
-        ${tile.isMatched ? 'scale-0 opacity-0' : 'scale-100 opacity-100'} 
+        relative w-full h-full rounded flex items-center justify-center
+        transition-opacity duration-150
+        ${isSelected ? 'bg-slate-500' : 'bg-slate-700'}
+        ${tile.isMatched ? 'opacity-0' : 'opacity-100'} 
       `}>
         {/* Background Icon */}
         <div className={`w-3/4 h-3/4 ${colorClass} pointer-events-none`}>

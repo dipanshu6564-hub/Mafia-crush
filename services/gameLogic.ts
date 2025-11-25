@@ -1,28 +1,21 @@
 import { Board, Tile, TileType, LevelConfig, PowerUpType, TileSpecial } from '../types';
 import { BOARD_SIZE } from '../constants';
 
-// --- Level Generation ---
+// Simple ID counter for performance (faster than Date.now() + Math.random())
+let idCounter = 0;
+const generateId = () => `t_${++idCounter}`;
+
 export const generateLevelConfig = (levelNum: number): LevelConfig => {
   const allTypes = [
     TileType.PISTOL, TileType.HAT, TileType.CASH, 
     TileType.CIGAR, TileType.GEM, TileType.KNUCKLES
   ];
   
-  // DIFFICULTY SPIKE:
-  // Colors increase much faster now.
-  // Level 1-2: 4 Colors
-  // Level 3-9: 5 Colors (Was 11)
-  // Level 10+: 6 Colors (Was 51)
   let colorCount = 4;
   if (levelNum > 2) colorCount = 5;
   if (levelNum >= 10) colorCount = 6;
 
   const levelColors = allTypes.slice(0, colorCount);
-
-  // SCORE SPIKE:
-  // Old: 500 + 250*L
-  // New: 5000 + 1000*L
-  // Level 1 target is now 6000 instead of 750.
   const targetScore = 5000 + (levelNum * 1000); 
 
   return {
@@ -33,7 +26,6 @@ export const generateLevelConfig = (levelNum: number): LevelConfig => {
   };
 };
 
-// --- Board Creation ---
 const getRandomType = (colors: TileType[]) => colors[Math.floor(Math.random() * colors.length)];
 
 export const createBoard = (colors: TileType[]): Board => {
@@ -49,7 +41,7 @@ export const createBoard = (colors: TileType[]): Board => {
         type = getRandomType(colors);
       }
       row.push({
-        id: `${x}-${y}-${Date.now()}-${Math.random()}`,
+        id: generateId(),
         type,
         x,
         y,
@@ -61,7 +53,6 @@ export const createBoard = (colors: TileType[]): Board => {
   return board;
 };
 
-// --- Grouped Matching Logic ---
 export interface MatchGroup {
   tiles: Tile[];
   type: 'horizontal' | 'vertical';
@@ -69,7 +60,6 @@ export interface MatchGroup {
 
 export const findMatchGroups = (board: Board): MatchGroup[] => {
   const groups: MatchGroup[] = [];
-
   // Horizontal
   for (let y = 0; y < BOARD_SIZE; y++) {
     let matchLength = 1;
@@ -83,16 +73,13 @@ export const findMatchGroups = (board: Board): MatchGroup[] => {
       } else {
         if (matchLength >= 3) {
           const tiles: Tile[] = [];
-          for (let k = 0; k < matchLength; k++) {
-             tiles.push(board[y][x - k]);
-          }
+          for (let k = 0; k < matchLength; k++) tiles.push(board[y][x - k]);
           groups.push({ tiles, type: 'horizontal' });
         }
         matchLength = 1;
       }
     }
   }
-
   // Vertical
   for (let x = 0; x < BOARD_SIZE; x++) {
     let matchLength = 1;
@@ -106,31 +93,24 @@ export const findMatchGroups = (board: Board): MatchGroup[] => {
       } else {
         if (matchLength >= 3) {
           const tiles: Tile[] = [];
-          for (let k = 0; k < matchLength; k++) {
-             tiles.push(board[y - k][x]);
-          }
+          for (let k = 0; k < matchLength; k++) tiles.push(board[y - k][x]);
           groups.push({ tiles, type: 'vertical' });
         }
         matchLength = 1;
       }
     }
   }
-
   return groups;
 };
 
-// --- Logic to Trigger Special Effects ---
 export const triggerSpecialEffect = (board: Board, tile: Tile): Tile[] => {
   const tilesToRemove: Tile[] = [];
-
   if (!tile.special || tile.special === TileSpecial.NONE) return tilesToRemove;
 
   if (tile.special === TileSpecial.ROW_BLAST) {
-    // Clear Row
     for(let x=0; x<BOARD_SIZE; x++) tilesToRemove.push(board[tile.y][x]);
   } 
   else if (tile.special === TileSpecial.COLOR_BOMB) {
-     // Clear Color
      const targetType = tile.type;
      for(let y=0; y<BOARD_SIZE; y++){
       for(let x=0; x<BOARD_SIZE; x++){
@@ -138,12 +118,9 @@ export const triggerSpecialEffect = (board: Board, tile: Tile): Tile[] => {
       }
     }
   }
-
   return tilesToRemove;
 };
 
-
-// --- Power Up Logic (Inventory) ---
 export const applyPowerUp = (
   board: Board, 
   powerUp: PowerUpType, 
@@ -151,7 +128,6 @@ export const applyPowerUp = (
   targetY: number
 ): Tile[] => {
   const tilesToRemove = new Set<Tile>();
-  
   if (powerUp === PowerUpType.GUN) {
     for(let x=0; x<BOARD_SIZE; x++) tilesToRemove.add(board[targetY][x]);
   } 
@@ -178,13 +154,10 @@ export const applyPowerUp = (
       }
     }
   }
-
   return Array.from(tilesToRemove);
 };
 
-// --- Refill Logic (Gravity) ---
 export const refillBoard = (board: Board, colors: TileType[]): Board => {
-  // Optimized: Use a shallow copy for rows, but try to reuse tile objects where possible in future optimization
   const newBoard = board.map(row => [...row]); 
 
   for (let x = 0; x < BOARD_SIZE; x++) {
@@ -193,19 +166,15 @@ export const refillBoard = (board: Board, colors: TileType[]): Board => {
       if (newBoard[y][x].type === TileType.EMPTY) {
         emptySlots++;
       } else if (emptySlots > 0) {
-        // Move tile down
         const tileToMove = newBoard[y][x];
-        // Create new object only for moved tile to trigger render
         newBoard[y + emptySlots][x] = { ...tileToMove, x: x, y: y + emptySlots };
-        // Mark old spot empty
         newBoard[y][x] = { ...newBoard[y][x], type: TileType.EMPTY, special: TileSpecial.NONE };
       }
     }
 
-    // Fill top slots
     for (let y = 0; y < emptySlots; y++) {
       newBoard[y][x] = {
-        id: `new-${x}-${y}-${Date.now()}-${Math.random()}`,
+        id: generateId(),
         type: getRandomType(colors),
         x,
         y,
@@ -213,6 +182,5 @@ export const refillBoard = (board: Board, colors: TileType[]): Board => {
       };
     }
   }
-  
   return newBoard;
 };

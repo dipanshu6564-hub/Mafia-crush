@@ -22,7 +22,6 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
   const processingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragStart = useRef<{tileX: number, tileY: number, clientX: number, clientY: number} | null>(null);
 
-  // Initialize
   useEffect(() => {
     setBoard(createBoard(levelConfig.colors));
     setSelectedTile(null);
@@ -30,7 +29,6 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
     dragStart.current = null;
   }, [levelConfig]);
 
-  // Main processing loop
   const processBoard = useCallback((currentBoard: Board, fromSwap = false, swappedCoords?: {x1:number, y1:number, x2:number, y2:number}) => {
     const groups = findMatchGroups(currentBoard);
     
@@ -39,25 +37,21 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
       
       const newBoard = currentBoard.map(row => [...row]);
       let totalPoints = 0;
-      const tilesToRemove = new Set<string>(); // Store IDs
-      const tilesToCreate: {x:number, y:number, special: TileSpecial}[] = [];
+      const tilesToRemove = new Set<string>();
+      
+      // Optimization: Use Map for O(1) lookup during board regeneration
+      const creationMap = new Map<string, TileSpecial>();
 
-      // Process Logic
       groups.forEach(group => {
         const length = group.tiles.length;
-        
-        // Score Calculation: Increased multiplier to 20 because target score is now much higher
         totalPoints += length * 20 * (fromSwap ? 1 : 1.5);
 
-        // determine if this group generates a special block
         let specialCreated: TileSpecial = TileSpecial.NONE;
         if (length >= 5) specialCreated = TileSpecial.COLOR_BOMB;
         else if (length === 4) specialCreated = TileSpecial.ROW_BLAST;
 
         if (specialCreated !== TileSpecial.NONE) {
-          // Find best spot for special tile (prefer swapped position)
           let targetTile = group.tiles[0];
-          
           if (fromSwap && swappedCoords) {
              const swapMatch = group.tiles.find(t => 
                (t.x === swappedCoords.x1 && t.y === swappedCoords.y1) || 
@@ -67,17 +61,14 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
           } else {
              targetTile = group.tiles[Math.floor(length/2)];
           }
-
-          tilesToCreate.push({ x: targetTile.x, y: targetTile.y, special: specialCreated });
+          creationMap.set(`${targetTile.x},${targetTile.y}`, specialCreated);
           group.tiles.forEach(t => {
             if (t.id !== targetTile.id) tilesToRemove.add(t.id);
           });
         } else {
-          // Normal Match 3
           group.tiles.forEach(t => tilesToRemove.add(t.id));
         }
 
-        // Chain Reaction Check
         group.tiles.forEach(t => {
            if (t.special && t.special !== TileSpecial.NONE) {
                const effects = triggerSpecialEffect(currentBoard, t);
@@ -88,7 +79,6 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
 
       onScore(Math.floor(totalPoints));
 
-      // 1. Mark matched visually
       const matchedBoard = newBoard.map(row => row.map(t => {
         const shouldRemove = tilesToRemove.has(t.id);
         if (shouldRemove) return { ...t, isMatched: true };
@@ -97,13 +87,11 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
       
       setBoard(matchedBoard);
 
-      // 2. Wait, then cleanup and refill
       processingTimeout.current = setTimeout(() => {
-        // Apply removals and creations
         const clearedBoard = matchedBoard.map(row => row.map(t => {
-           const creation = tilesToCreate.find(c => c.x === t.x && c.y === t.y);
-           if (creation) {
-             return { ...t, special: creation.special, isMatched: false };
+           const key = `${t.x},${t.y}`;
+           if (creationMap.has(key)) {
+             return { ...t, special: creationMap.get(key)!, isMatched: false };
            }
            if (t.isMatched) {
              return { ...t, type: TileType.EMPTY, isMatched: false, special: TileSpecial.NONE };
@@ -124,48 +112,63 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
     }
   }, [levelConfig.colors, onScore]);
 
+  const performSwap = useCallback((x1: number, y1: number, x2: number, y2: number) => {
+    // This function needs to access current board state via closure, so it's tricky with useCallback
+    // But since `board` changes, we need to rely on the state provided or pass it.
+    // However, for swapping, we rely on the `board` state variable.
+    // To make it truly efficient, we use the Functional Update pattern or just accept that it depends on `board`.
+    // Since board updates often, we keep it simple but efficient.
+    
+    setBoard(prevBoard => {
+      const newBoard = prevBoard.map(row => [...row]);
+      const t1 = newBoard[y1][x1];
+      const t2 = newBoard[y2][x2];
 
-  const performSwap = (x1: number, y1: number, x2: number, y2: number) => {
-    // Optimistic UI Update
-    const newBoard = board.map(row => [...row]);
-    const t1 = newBoard[y1][x1];
-    const t2 = newBoard[y2][x2];
+      const temp = {...t1};
+      newBoard[y1][x1] = {...t2, x: x1, y: y1};
+      newBoard[y2][x2] = {...temp, x: x2, y: y2};
 
-    // Swap Objects (IDs and Types)
+      // Trigger processing logic side-effect (needs to be outside render, but triggered here)
+      // This is a complex pattern. For simplicity in this app structure:
+      // We return newBoard here to update UI instantly.
+      // We trigger the logic check via a timeout/effect, OR we just run the logic check here.
+      
+      return newBoard;
+    });
+    
+    // We need the board data for logic, so we reconstruct:
+    const tempBoard = board.map(row => [...row]);
+    const t1 = tempBoard[y1][x1];
+    const t2 = tempBoard[y2][x2];
     const temp = {...t1};
-    newBoard[y1][x1] = {...t2, x: x1, y: y1};
-    newBoard[y2][x2] = {...temp, x: x2, y: y2};
+    tempBoard[y1][x1] = {...t2, x: x1, y: y1};
+    tempBoard[y2][x2] = {...temp, x: x2, y: y2};
 
-    setBoard(newBoard);
     setSelectedTile(null);
     setIsProcessing(true);
 
-    // Check Logic
     setTimeout(() => {
-      const groups = findMatchGroups(newBoard);
-      
-      // Special Interaction: Check if swapping specials (Simplification: trigger if Color Bomb)
+      const groups = findMatchGroups(tempBoard);
       const isSpecialTrigger = (t1.special === TileSpecial.COLOR_BOMB || t2.special === TileSpecial.COLOR_BOMB);
 
       if (groups.length > 0 || isSpecialTrigger) {
-         processBoard(newBoard, true, {x1, y1, x2, y2});
+         processBoard(tempBoard, true, {x1, y1, x2, y2});
       } else {
         // Revert
-        const revertedBoard = newBoard.map(row => [...row]);
-        // Swap back
-        const r1 = revertedBoard[y1][x1];
-        const r2 = revertedBoard[y2][x2];
-        
-        revertedBoard[y1][x1] = {...r2, x: x1, y: y1};
-        revertedBoard[y2][x2] = {...r1, x: x2, y: y2};
-        
-        setBoard(revertedBoard);
+        setBoard(prev => {
+             const rev = prev.map(row => [...row]);
+             const r1 = rev[y1][x1];
+             const r2 = rev[y2][x2];
+             rev[y1][x1] = {...r2, x: x1, y: y1};
+             rev[y2][x2] = {...r1, x: x2, y: y2};
+             return rev;
+        });
         setIsProcessing(false);
       }
-    }, 200);
-  };
+    }, 150);
+  }, [board, processBoard]); // Dependencies
 
-  const handleTileClick = (x: number, y: number) => {
+  const handleTileClick = useCallback((x: number, y: number) => {
     if (!gameActive || isProcessing) return;
 
     if (activePowerUp) {
@@ -201,20 +204,20 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
         setSelectedTile({ x, y });
       }
     }
-  };
+  }, [gameActive, isProcessing, activePowerUp, board, selectedTile, levelConfig.colors, performSwap, onPowerUpUsed, processBoard]);
 
-  const handlePointerDown = (e: React.PointerEvent, x: number, y: number) => {
+  const handlePointerDown = useCallback((e: React.PointerEvent, x: number, y: number) => {
     if (!gameActive || isProcessing || activePowerUp) return;
     if (e.button !== 0) return;
     (e.target as Element).setPointerCapture(e.pointerId);
     dragStart.current = { tileX: x, tileY: y, clientX: e.clientX, clientY: e.clientY };
-  };
+  }, [gameActive, isProcessing, activePowerUp]);
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!dragStart.current || isProcessing) return;
     const dx = e.clientX - dragStart.current.clientX;
     const dy = e.clientY - dragStart.current.clientY;
-    const threshold = 10; // LOW SENSITIVITY
+    const threshold = 5; 
     
     if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
       const { tileX, tileY } = dragStart.current;
@@ -243,7 +246,7 @@ const GameBoardBase: React.FC<GameBoardProps> = ({
 
   return (
     <div 
-      className="relative p-2 bg-slate-800/80 rounded-lg shadow-2xl border-4 border-slate-700 touch-none overflow-hidden game-board-container"
+      className="relative bg-slate-800 rounded shadow-sm border border-slate-700 overflow-hidden game-board-container"
       style={{ width: '100%', maxWidth: '500px', aspectRatio: '1/1', contain: 'strict' }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
