@@ -2,15 +2,14 @@
   "name": "Mafia Crush",
   "short_name": "MafiaCrush",
   "description": "Rise through the ranks in this high-stakes Mafia match-3 puzzle game. 30,000 levels of crime and strategy.",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
+  "id": "https://mafiacrush.vercel.app/",
+  "start_url": "https://mafiacrush.vercel.app/",
+  "scope": "https://mafiacrush.vercel.app/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "lang": "en-US",
-  "prefer_related_applications": false,
   "categories": ["games", "puzzle", "entertainment"],
   "icons": [
     {
