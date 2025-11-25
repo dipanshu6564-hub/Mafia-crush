@@ -14,7 +14,7 @@
     <title>Mafia Crush</title>
     
     <!-- PWA Manifest & Domain Verification -->
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
     <link rel="canonical" href="https://mafiacrush.vercel.app/" />
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2042/2042693.png">
 
@@ -30,6 +30,10 @@
         overflow: hidden; /* Prevent scroll on body */
         overscroll-behavior: none; /* Prevent pull-to-refresh */
         background-color: #0f172a;
+        -webkit-user-select: none; /* Safari */
+        -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* IE10+/Edge */
+        user-select: none; /* Standard */
       }
 
       body {
@@ -68,9 +72,24 @@
     <script type="module" src="./index.tsx" crossorigin="anonymous"></script>
     
     <script>
+      // Native App Feel: Disable context menu (right click/long press)
+      window.addEventListener('contextmenu', function (e) { 
+        e.preventDefault(); 
+      }, false);
+
+      // Force links to stay inside the WebView/App
+      document.addEventListener('click', function(e) {
+        var target = e.target;
+        if (target.tagName === 'A') {
+          e.preventDefault();
+          window.location.href = target.href;
+        }
+      });
+
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
+          // Use relative path ./sw.js
+          navigator.serviceWorker.register('./sw.js')
             .then(registration => {
               console.log('SW registered: ', registration);
             })

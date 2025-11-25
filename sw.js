@@ -1,8 +1,8 @@
-const CACHE_NAME = 'mafia-crush-v5';
+const CACHE_NAME = 'mafia-crush-v6';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
+  './',
+  './index.html',
+  './manifest.json',
   'https://cdn-icons-png.flaticon.com/512/2042/2042693.png'
 ];
 
