@@ -153,7 +153,7 @@ export default function App() {
 
   // Active Game
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative bg-radial-gradient">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 pb-24 relative bg-radial-gradient">
       
       {/* HUD */}
       <div className="w-full max-w-lg flex justify-between items-center mb-4 px-4 py-3 bg-slate-800/90 rounded-lg border border-slate-600 shadow-lg text-white">
