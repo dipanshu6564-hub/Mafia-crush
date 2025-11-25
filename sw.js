@@ -1,8 +1,8 @@
-const CACHE_NAME = 'mafia-crush-v4';
+const CACHE_NAME = 'mafia-crush-v5';
 const urlsToCache = [
-  'https://mafiacrush.vercel.app/',
-  'https://mafiacrush.vercel.app/index.html',
-  'https://mafiacrush.vercel.app/manifest.json',
+  '/',
+  '/index.html',
+  '/manifest.json',
   'https://cdn-icons-png.flaticon.com/512/2042/2042693.png'
 ];
 
@@ -20,23 +20,17 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        // Check if we received a valid response
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
-
-        // Clone the response
         const responseToCache = response.clone();
-
         caches.open(CACHE_NAME)
           .then(cache => {
             cache.put(event.request, responseToCache);
           });
-
         return response;
       })
       .catch(() => {
-        // If fetch fails, try to serve from cache
         return caches.match(event.request);
       })
   );
