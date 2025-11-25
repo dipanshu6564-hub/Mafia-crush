@@ -5,8 +5,8 @@ import { TILE_ICONS, TILE_COLORS, SPECIAL_OVERLAYS } from '../constants';
 interface TileProps {
   tile: Tile;
   isSelected: boolean;
-  onClick: () => void;
-  onPointerDown?: (e: React.PointerEvent) => void;
+  onClick: (x: number, y: number) => void;
+  onPointerDown: (e: React.PointerEvent, x: number, y: number) => void;
 }
 
 const TileComponentBase: React.FC<TileProps> = ({ tile, isSelected, onClick, onPointerDown }) => {
@@ -23,7 +23,7 @@ const TileComponentBase: React.FC<TileProps> = ({ tile, isSelected, onClick, onP
     transition: 'transform 0.15s ease-out', 
     zIndex: isSelected ? 50 : 10,
     padding: '3px',
-    // backfaceVisibility: 'hidden', // Sometimes causes blurry text on low-res screens, removing for crispness
+    touchAction: 'none', // Critical for mobile
   };
 
   const colorClass = TILE_COLORS[tile.type] || 'text-white';
@@ -31,8 +31,8 @@ const TileComponentBase: React.FC<TileProps> = ({ tile, isSelected, onClick, onP
   
   return (
     <div
-      onClick={onClick}
-      onPointerDown={onPointerDown}
+      onClick={() => onClick(tile.x, tile.y)}
+      onPointerDown={(e) => onPointerDown(e, tile.x, tile.y)}
       style={transformStyle}
       className="touch-none select-none"
     >
@@ -55,6 +55,9 @@ const TileComponentBase: React.FC<TileProps> = ({ tile, isSelected, onClick, onP
 };
 
 export const TileComponent = React.memo(TileComponentBase, (prev, next) => {
+  // STRICT COMPARISON
+  // We assume onClick and onPointerDown are stable references from the parent
+  // So we only check the data that actually changes visuals.
   return (
     prev.tile.id === next.tile.id &&
     prev.tile.type === next.tile.type &&
