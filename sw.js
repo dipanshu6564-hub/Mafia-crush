@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mafia-crush-v1';
+const CACHE_NAME = 'mafia-crush-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -7,23 +7,31 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        // We try to cache core files, but don't fail if specific files aren't found in dev env
-        return cache.addAll(urlsToCache).catch(err => console.log('Cache addAll error', err));
+        return cache.addAll(urlsToCache);
       })
   );
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        if (response) {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
-        return fetch(event.request);
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME)
+          .then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
       })
   );
 });
