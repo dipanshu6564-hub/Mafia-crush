@@ -1,0 +1,24 @@
+{
+  "name": "Mafia Crush",
+  "short_name": "MafiaCrush",
+  "description": "Rise through the ranks in this high-stakes Mafia match-3 puzzle game. 30,000 levels of crime and strategy.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2042/2042693.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2042/2042693.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
